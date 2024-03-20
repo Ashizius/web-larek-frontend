@@ -42,7 +42,7 @@ abstract class Form extends Component<object> {
     }
 
     protected _validateForm(){
-        this._event.emit(`Form:validate`,{name:this._container.name,info:this.values});
+        this._event.emit(`form:validate`,{name:this._container.name,info:this.values});
     }
 
     protected _addEventListeners() {

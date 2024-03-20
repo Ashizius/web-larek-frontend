@@ -42,6 +42,7 @@ export class CatalogView<C extends ICardBase<T>,T extends TWareInfo> extends Com
                 }
             }
         });
+        this._event.emit('catalog:changed');
     }
 
     public find(id:string):C|undefined {

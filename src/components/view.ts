@@ -1,8 +1,9 @@
+import { IPage } from "../types/page";
 import { ensureElement } from "../utils/utils";
 import { IEvents } from "./base/events";
 
 
-export class Page {
+export class Page implements IPage {
     protected _basketButton: HTMLButtonElement;
     protected _basketCounter: HTMLSpanElement;
     protected _wrapper: HTMLElement;

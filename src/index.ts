@@ -49,22 +49,79 @@ const formOrder=new FormOrder(formOrderElement,event);
 const formContacts=new FormContacts(formContactsElement,event);
 const dialogSuccess= new Dialog(dialogSuccessElement,event);
 
+let orderStep=0;
+
 api.getWaresList().then( (itemList:TWareInfo[])=> {
     catalog.list=itemList;
+});
+
+
+
+
+event.on('catalog:changed', ()=>{
     galleryView.setList(catalog.list);
-}
-);
+})
 
+event.on('modal:open',()=>{
+    pageView.lock();
+})
 
-let orderStep=0;
+event.on('modal:close',()=>{
+    if (orderStep>0) {
+        orderStep=0;
+        formContacts.reset();
+        formOrder.reset();
+    }
+    pageView.lock(false);
+})
+
+event.on('catalog.card:view',({id}:Partial<TWareInfo>)=>{
+    const ware=catalog.findWare(id);
+    if (ware) {
+        cardPreview.render({...ware.info,isInCart:ware.isInCart});
+        modal.setContent(cardPreview.container).open();
+    }
+})
+
+event.on('cart:changeItem',(ware:IWare|undefined)=>{
+    basketView.setList(cart.positions);
+    basketView.fullprice=cart.fullprice;
+    pageView.waresAmount=cart.amount;
+    if (ware) {
+        ware.isInCart=cart.contains(ware);
+        if (cardPreview.id===ware.info.id){
+            cardPreview.isInCart=ware.isInCart;
+        }
+    }
+    else {
+        catalog.list.forEach(wareInfo=>{
+            const ware=catalog.findWare(wareInfo.id);
+            ware.isInCart=cart.contains(ware);
+        })
+    }
+}) 
+
+event.on('ware:addToCart',({id}:Partial<TWareInfo>)=>{
+    const ware=catalog.findWare(id);
+    if (ware) {
+        cart.addItem(ware);
+        event.emit('cart:changeItem',ware);
+    }    
+})
+
+event.on('ware:removeFromCart',({id}:Partial<TWareInfo>)=>{
+    const ware=catalog.findWare(id);
+    if (ware) {
+        cart.removeItem(ware);
+        event.emit('cart:changeItem',ware);
+    }
+})
+
 event.on('orderItems', ()=>{
     orderStep=0;
     event.emit('form:advance');
 })
 
-event.on('success', ()=>{
-    modal.close();
-})
 
 event.on('form:advance', ()=>{
     orderStep+=1;
@@ -73,8 +130,8 @@ event.on('form:advance', ()=>{
             modal.setContent(formOrder.container).open();
         break;
         case 2:
-            modal.setContent(formContacts.container).open();    
             Object.assign(order.info,formOrder.values);
+            modal.setContent(formContacts.container).open();    
         break;
         case 3:
             Object.assign(order.info,formContacts.values,{items:cart.idList,total:cart.fullprice});
@@ -108,67 +165,8 @@ event.on('form:advance', ()=>{
     }
 })
 
-event.on('modal:open',()=>{
-    pageView.lock();
-})
 
-event.on('modal:close',()=>{
-    if (orderStep>0) {
-        orderStep=0;
-        formContacts.reset();
-        formOrder.reset();
-    }
-    pageView.lock(false);
-})
-
-event.on('cart:view', ()=>{
-    modal.setContent(basketView.container).open();
-})
-
-event.on('cart:changeItem',(ware:IWare|undefined)=>{
-    basketView.setList(cart.positions);
-    basketView.fullprice=cart.fullprice;
-    pageView.waresAmount=cart.amount;
-    if (ware) {
-        ware.isInCart=cart.contains(ware);
-        if (cardPreview.id===ware.info.id){
-            cardPreview.isInCart=ware.isInCart;
-        }
-    }
-    else {
-        catalog.list.forEach(wareInfo=>{
-            const ware=catalog.findWare(wareInfo.id);
-            ware.isInCart=cart.contains(ware);
-        })
-    }
-    console.log(ware);
-}) 
-
-event.on('ware:addToCart',({id}:Partial<TWareInfo>)=>{
-    const ware=catalog.findWare(id);
-    if (ware) {
-        cart.addItem(ware);
-        event.emit('cart:changeItem',ware);
-    }    
-})
-
-event.on('ware:removeFromCart',({id}:Partial<TWareInfo>)=>{
-    const ware=catalog.findWare(id);
-    if (ware) {
-        cart.removeItem(ware);
-        event.emit('cart:changeItem',ware);
-    }
-})
-
-event.on('catalog.card:view',({id}:Partial<TWareInfo>)=>{
-    const ware=catalog.findWare(id);
-    if (ware) {
-        cardPreview.render({...ware.info,isInCart:ware.isInCart});
-        modal.setContent(cardPreview.container).open();
-    }
-})
-
-event.on('Form:validate',({name,info}:{name:string,info:TOrderInfo})=>{
+event.on('form:validate',({name,info}:{name:string,info:TOrderInfo})=>{
     switch (name) {
         case 'order':
             formOrder.error=order.validate(info);
@@ -181,4 +179,15 @@ event.on('Form:validate',({name,info}:{name:string,info:TOrderInfo})=>{
             formContacts.error=order.validate(info);
             break;
     }
+})
+
+
+
+event.on('success', ()=>{
+    modal.close();
+})
+
+
+event.on('cart:view', ()=>{
+    modal.setContent(basketView.container).open();
 })

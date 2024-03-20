@@ -13,5 +13,4 @@ export interface IFormOrder<T> extends IForm {
 export interface IFormContacts extends IForm {
     phone:string;
     email:string;
-
 }
