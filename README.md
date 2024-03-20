@@ -369,6 +369,7 @@ interface IModalWindow {
   close: () => void;
   setContent(value:HTMLElement):IModalWindow;
 }
+```
 
 ### логика работы, Presenter и взаимодействие с пользователем ###
 создаются классы моделей корзины и каталога, каталог на вход принимает конструктор продукта, при получении списка товаров создаёт соответствующие экземпляры классов товара\
@@ -398,4 +399,4 @@ interface IModalWindow {
 
 ## Размещение в сети ##
 
-[исходный кодъ](https://github.com/Ashizius/web-larek-frontend.git)
+[исходный код](https://github.com/Ashizius/web-larek-frontend.git)

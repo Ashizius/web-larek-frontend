@@ -45,37 +45,5 @@ export class LarekApi extends Api  implements ILarekApi {
       })
   }
 
-/*
-  protected orderItems(orderInfo:TOrderInfo): Promise<Partial<TOrderResult>|void>  {
-    return this.postOrder(orderInfo)
-    
-  }
-
-  setOrderInfo(orderInfo:TOrderInfo) {
-    this._orderInfo=orderInfo;
-    return this
-  }
-
-  get orderResult():Partial<TOrderResult> {
-    const orderResult:Partial<TOrderResult|void>={error:'',id:'',total:0};
-    console.log(this._orderInfo);
-    if (!this._orderInfo) {
-      orderResult.error='нечего заказывать';
-      return orderResult
-    }
-    this.postOrder(this._orderInfo)
-    .then(data=>{
-      if (data) {
-        orderResult.id=(data as Partial<TOrderResult>).id;
-        orderResult.total=(data as Partial<TOrderResult>).total;
-        this._event.emit
-      }
-    })
-    .catch(error=>orderResult.error=error);
-    this._orderInfo=undefined;
-    return orderResult
-  }
-*/
-  
 }
 

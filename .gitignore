@@ -5,3 +5,5 @@ dist
 .idea
 .vscode
 *.log
+.temp.tmp
+.temp1.tmp

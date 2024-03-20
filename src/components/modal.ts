@@ -19,7 +19,6 @@ export class ModalWindow implements IModalWindow {
   }
 
   open() {
-    //ModalWindow._currentWindow = this._currentElement;
     this._currentElement.addEventListener(
       'click',
       this.closeEvent.bind(this)
