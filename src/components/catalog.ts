@@ -1,4 +1,3 @@
-import { TAction } from '../types';
 import { ICardBase, ICardConstructor, ICardBasket } from '../types/card';
 import { IBasketView, ICatalogView, TcardModifier } from '../types/catalog';
 import { TWareInfo } from '../types/model';

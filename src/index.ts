@@ -11,7 +11,7 @@ import { Dialog, FormContacts, FormOrder } from './components/form';
 import { CatalogView, BasketView } from './components/catalog';
 import { ICardCatalog } from './types/card';
 import { IWare, TOrderInfo, TWareInfo } from './types/model';
-import { TError, TOrderResult } from './types';
+import { TOrderResult } from './types';
 
 const api = new LarekApi(CDN_URL, API_URL);
 const eventEmitter = new EventEmitter();
@@ -77,7 +77,7 @@ const cardPreview = new CardCatalog<TWareInfo & { isInCart: boolean }>(
   '.card__button'
 );
 
-cardPreview.setAction((ev: MouseEvent) => {
+cardPreview.setAction(() => {
   if (!cardPreview.isInCart) {
     eventEmitter.emit('ware:addToCart', { id: cardPreview.id });
     cardPreview.isInCart = true;
