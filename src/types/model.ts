@@ -45,7 +45,7 @@ export interface IWareConstructor {
 export interface ICatalog {
   addWare(val: TWareInfo): void; // добавить товар в каталог
   list: TWareInfo[];  // список товаров
-  findWare(id: string): IWare; // поиск товара в каталоге по id
+  findWare(id: string): IWare|undefined; // поиск товара в каталоге по id
 }
 
 export interface ICart {
@@ -55,7 +55,7 @@ export interface ICart {
     get amount(): number; //полное количество товаров
     addItem: (ware: IWare) => void; //добавить товар в корзину
     removeItem: (ware: IWare) => void; //удалить товар из корзины
-    contains: (ware: IWare) => void; //содержит товар в корзине
+    contains: (ware: IWare)=>boolean; //содержит товар в корзине
     clear: () => void; //очистить корзину
   };
 

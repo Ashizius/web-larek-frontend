@@ -4,9 +4,9 @@ import { IEvents } from "./base/events";
 
 
 export class Page implements IPage {
-    protected _basketButton: HTMLButtonElement;
-    protected _basketCounter: HTMLSpanElement;
-    protected _wrapper: HTMLElement;
+    protected _basketButton: HTMLButtonElement;//элемент кнопки корзины
+    protected _basketCounter: HTMLSpanElement;//счётчик товаров в корзине
+    protected _wrapper: HTMLElement;//враппер страницы, используется для блокировки
     constructor (protected _container: HTMLElement,protected _event:IEvents) {
         this._basketButton=ensureElement<HTMLButtonElement>('.header__basket',_container);
         this._basketCounter=ensureElement<HTMLSpanElement>('.header__basket-counter',_container);

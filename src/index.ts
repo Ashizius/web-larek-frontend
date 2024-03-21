@@ -5,7 +5,7 @@ import { Cart, Catalog, Order, Ware } from './components/model';
 import { EventEmitter } from './components/base/events';
 import { cloneTemplate, ensureElement } from './utils/utils';
 import { Page } from './components/view';
-import {CardCatalog, CardPreview, CardBasket} from './components/card';
+import {CardCatalog, CardBasket} from './components/card';
 import { ModalWindow } from './components/modal';
 import { Dialog, FormContacts, FormOrder } from './components/form';
 import { CatalogView, BasketView } from './components/catalog';
@@ -14,13 +14,11 @@ import { IWare, TOrderInfo, TWareInfo } from './types/model';
 import { TError, TOrderResult } from './types';
 
 const api=new LarekApi (CDN_URL, API_URL);
-const event= new EventEmitter();
+const eventEmitter= new EventEmitter();
 
 
-//const user= new User({});
-
-const cart=new Cart(event);
-const catalog=new Catalog(Ware, event);
+const cart=new Cart(eventEmitter);
+const catalog=new Catalog(Ware, eventEmitter);
 const order= new Order();
 
 const cardCatalogTemplate:HTMLTemplateElement=ensureElement<HTMLTemplateElement>('#card-catalog');
@@ -35,19 +33,43 @@ const pageElement:HTMLElement=ensureElement('.page');
 const galleryElement:HTMLElement=ensureElement('.gallery');
 const basketElement:HTMLElement=cloneTemplate(basketTemplate);
 const cardPreviewElement:HTMLElement=cloneTemplate(cardPreviewTemplate);
+const modalContainer=ensureElement('#modal-container');
 const formOrderElement:HTMLFormElement=cloneTemplate(formOrderTemplate);
 const formContactsElement:HTMLFormElement=cloneTemplate(formContactsTemplate);
 const dialogSuccessElement:HTMLElement=cloneTemplate(dialogSuccessTemplate);
 
-const pageView= new Page(pageElement,event)
-const galleryView=new CatalogView<ICardCatalog<TWareInfo>,TWareInfo>(galleryElement,event,CardCatalog,cardCatalogTemplate);
-const basketView=new BasketView(basketElement,event,CardBasket,cardBasketTemplate);
-const modalContainer=ensureElement('#modal-container');
-const modal = new ModalWindow(ensureElement('.page'),modalContainer,event);
-const cardPreview= new CardPreview<TWareInfo&{isInCart:boolean}>(cardPreviewElement,event);
-const formOrder=new FormOrder(formOrderElement,event);
-const formContacts=new FormContacts(formContactsElement,event);
-const dialogSuccess= new Dialog(dialogSuccessElement,event);
+const pageView= new Page(pageElement,eventEmitter);
+
+const galleryView=new CatalogView<ICardCatalog<TWareInfo>,TWareInfo>(galleryElement,eventEmitter,CardCatalog,cardCatalogTemplate, (card)=>{
+    card.setAction (()=> {
+        eventEmitter.emit('catalog.card:view',{id: card.id});
+    })
+});
+
+const basketView=new BasketView(basketElement,eventEmitter,CardBasket,cardBasketTemplate, (card)=>{
+    card.setAction (()=> {
+        eventEmitter.emit('ware:removeFromCart',{id: card.id});
+    })
+});
+
+const cardPreview= new CardCatalog<TWareInfo&{isInCart:boolean}>(cardPreviewElement,eventEmitter, '.card__button');
+
+cardPreview.setAction((ev: MouseEvent)=> {
+    if (!cardPreview.isInCart) {
+        eventEmitter.emit('ware:addToCart',{id: cardPreview.id});
+        cardPreview.isInCart=true;
+    }
+    else {
+        eventEmitter.emit('ware:removeFromCart',{id: cardPreview.id});
+        cardPreview.isInCart=false;
+    }
+})
+
+
+const modal = new ModalWindow(pageElement,modalContainer,eventEmitter);
+const formOrder=new FormOrder(formOrderElement,eventEmitter);
+const formContacts=new FormContacts(formContactsElement,eventEmitter);
+const dialogSuccess= new Dialog(dialogSuccessElement,eventEmitter);
 
 let orderStep=0;
 
@@ -56,17 +78,15 @@ api.getWaresList().then( (itemList:TWareInfo[])=> {
 });
 
 
-
-
-event.on('catalog:changed', ()=>{
+eventEmitter.on('catalog:changed', ()=>{
     galleryView.setList(catalog.list);
 })
 
-event.on('modal:open',()=>{
+eventEmitter.on('modal:open',()=>{
     pageView.lock();
 })
 
-event.on('modal:close',()=>{
+eventEmitter.on('modal:close',()=>{
     if (orderStep>0) {
         orderStep=0;
         formContacts.reset();
@@ -75,7 +95,7 @@ event.on('modal:close',()=>{
     pageView.lock(false);
 })
 
-event.on('catalog.card:view',({id}:Partial<TWareInfo>)=>{
+eventEmitter.on('catalog.card:view',({id}:Partial<TWareInfo>)=>{
     const ware=catalog.findWare(id);
     if (ware) {
         cardPreview.render({...ware.info,isInCart:ware.isInCart});
@@ -83,7 +103,7 @@ event.on('catalog.card:view',({id}:Partial<TWareInfo>)=>{
     }
 })
 
-event.on('cart:changeItem',(ware:IWare|undefined)=>{
+eventEmitter.on('cart:changeItem',(ware:IWare|undefined)=>{
     basketView.setList(cart.positions);
     basketView.fullprice=cart.fullprice;
     pageView.waresAmount=cart.amount;
@@ -96,34 +116,36 @@ event.on('cart:changeItem',(ware:IWare|undefined)=>{
     else {
         catalog.list.forEach(wareInfo=>{
             const ware=catalog.findWare(wareInfo.id);
-            ware.isInCart=cart.contains(ware);
+            if (ware){
+                ware.isInCart=cart.contains(ware);
+            }
         })
     }
 }) 
 
-event.on('ware:addToCart',({id}:Partial<TWareInfo>)=>{
+eventEmitter.on('ware:addToCart',({id}:Partial<TWareInfo>)=>{
     const ware=catalog.findWare(id);
     if (ware) {
         cart.addItem(ware);
-        event.emit('cart:changeItem',ware);
+        eventEmitter.emit('cart:changeItem',ware);
     }    
 })
 
-event.on('ware:removeFromCart',({id}:Partial<TWareInfo>)=>{
+eventEmitter.on('ware:removeFromCart',({id}:Partial<TWareInfo>)=>{
     const ware=catalog.findWare(id);
     if (ware) {
         cart.removeItem(ware);
-        event.emit('cart:changeItem',ware);
+        eventEmitter.emit('cart:changeItem',ware);
     }
 })
 
-event.on('orderItems', ()=>{
+eventEmitter.on('orderItems', ()=>{
     orderStep=0;
-    event.emit('form:advance');
+    eventEmitter.emit('form:advance');
 })
 
 
-event.on('form:advance', ()=>{
+eventEmitter.on('form:advance', ()=>{
     orderStep+=1;
     switch (orderStep) {
         case 1:
@@ -139,7 +161,7 @@ event.on('form:advance', ()=>{
                 .then((data:Partial<TOrderResult>)=>{
                     dialogSuccess.total=(data as TOrderResult).total;
                     cart.clear();
-                    event.emit('cart:changeItem');
+                    eventEmitter.emit('cart:changeItem');
                 })
                 .catch ((error: string)=>{
                     if (/Товар с id [\w-]* не продается/.test(error))
@@ -166,7 +188,7 @@ event.on('form:advance', ()=>{
 })
 
 
-event.on('form:validate',({name,info}:{name:string,info:TOrderInfo})=>{
+eventEmitter.on('form:validate',({name,info}:{name:string,info:TOrderInfo})=>{
     switch (name) {
         case 'order':
             formOrder.error=order.validate(info);
@@ -183,11 +205,12 @@ event.on('form:validate',({name,info}:{name:string,info:TOrderInfo})=>{
 
 
 
-event.on('success', ()=>{
+eventEmitter.on('success', ()=>{
     modal.close();
 })
 
 
-event.on('cart:view', ()=>{
+eventEmitter.on('cart:view', ()=>{
     modal.setContent(basketView.container).open();
 })
+

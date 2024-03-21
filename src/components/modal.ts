@@ -12,7 +12,7 @@ export class ModalWindow implements IModalWindow {
     this._closeButton=ensureElement<HTMLButtonElement>('.modal__close',_currentElement);
   }
 
-  protected closeEvent(evt: KeyboardEvent) {
+  protected closeEvent(evt: KeyboardEvent) { //слушатель события закрытия окна
     if (evt.key === 'Escape' || (evt.type === 'click') && evt.target===this._currentElement || evt.target===this._closeButton) {
       this.close();
     }

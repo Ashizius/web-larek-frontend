@@ -10,7 +10,7 @@ export type TeventListener = {
   type: string;
 };
 
-interface IComponent<T> {
+export interface IComponent<T> {
   //разместить в элементе
   place(container: HTMLElement): void;
   // Вернуть корневой DOM-элемент
@@ -31,7 +31,7 @@ export abstract class Component<T> implements IComponent<T> {
   protected _callbacks: Map<
     HTMLButtonElement | HTMLInputElement,
     TeventListener[]
-  >;
+  >; // массив слушателей в компоненте
   protected constructor(
     protected readonly _container: HTMLElement,
     protected readonly _event: IEvents
@@ -110,7 +110,8 @@ export abstract class Component<T> implements IComponent<T> {
     return this._container;
   }
 
-  public addListener(
+
+  public addListener(   //добавить слушатель на элемент и записать его в массив
     element: HTMLButtonElement | HTMLInputElement,
     type: string,
     callback: TAction
@@ -123,7 +124,7 @@ export abstract class Component<T> implements IComponent<T> {
     }
   }
 
-  public clearListeners(element?: HTMLButtonElement | HTMLInputElement) {
+  public clearListeners(element?: HTMLButtonElement | HTMLInputElement) { //очистить все слушатели в компоненте
     if (!element) {
       this._callbacks.forEach((listeners, element) => {
         listeners.forEach((listener) =>

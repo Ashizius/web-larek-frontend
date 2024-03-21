@@ -13,8 +13,7 @@ export class Ware implements IWare {
   }
 
   get info (): TWareInfo {
-    //this._event.emit('ware:change',this);
-    return this._info
+      return this._info
   }
 
   public get isInCart(): boolean {
@@ -38,6 +37,7 @@ export class Catalog implements ICatalog {
   }
   set list(list:TWareInfo[]) {
     list.forEach(ware=>this.addWare(ware));
+    this._event.emit('catalog:changed');
   }
   get list () {
     return this._wares.map(item=>{return item.info});
@@ -181,8 +181,7 @@ export class Order implements IOrder {
     }
   }
 
-  validate(orderInfo:Partial<TOrderInfo>):string {
-    
+  public validate(orderInfo:Partial<TOrderInfo>):string {
     return Object.keys(orderInfo).every(key=>this.isValid(orderInfo,key))?'':'проверьте введённые данные'
   }
 }

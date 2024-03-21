@@ -1,5 +1,6 @@
+import { TAction } from "../types";
 import { ICardBase, ICardConstructor, ICardBasket } from "../types/card";
-import { IBasketView, ICatalogView } from "../types/catalog";
+import { IBasketView, ICatalogView, TcardModifier } from "../types/catalog";
 import { TWareInfo } from "../types/model";
 import { cloneTemplate, ensureElement } from "../utils/utils";
 import { Component } from "./base/component";
@@ -8,19 +9,21 @@ import { makePriceText } from "./card";
 
 export class CatalogView<C extends ICardBase<T>,T extends TWareInfo> extends Component<T> implements ICatalogView<C,T> {
     protected _cards:C[];
-    constructor (protected _container: HTMLElement,protected _event:IEvents, protected _CardConstructor:ICardConstructor<T,C>, protected _cardTemplate:HTMLTemplateElement) {
+    protected _customButtonSelector:string|undefined;
+    constructor (protected _container: HTMLElement,protected _event:IEvents, protected _CardConstructor:ICardConstructor<T,C>, protected _cardTemplate:HTMLTemplateElement, protected _cardModifier:TcardModifier<C>) {
         super( _container, _event);
         this._cards=[];
     }
 
-    protected addCard(ware:T):C {
-        const newCard:C=new this._CardConstructor(cloneTemplate(this._cardTemplate),this._event);
+    protected addCard(ware:T):C { //добавить карточку, создав её при помощи конструктора
+        const newCard:C=new this._CardConstructor(cloneTemplate(this._cardTemplate),this._event,this._customButtonSelector);
         newCard.render(ware);      
         this._cards.push(newCard);
+        this._cardModifier(newCard);
         return newCard
     }
 
-    public setList(wares:T[],placeContainer?:HTMLElement|undefined):void {
+    public setList(wares:T[],placeContainer?:HTMLElement|undefined):void { //назначить список карточек, если уже есть карточки, то обновить их, удалив лишние
         const container=placeContainer?placeContainer:this._container;
         let replace=false;
         const length:number=this._cards.length;
@@ -42,7 +45,6 @@ export class CatalogView<C extends ICardBase<T>,T extends TWareInfo> extends Com
                 }
             }
         });
-        this._event.emit('catalog:changed');
     }
 
     public find(id:string):C|undefined {
@@ -52,20 +54,22 @@ export class CatalogView<C extends ICardBase<T>,T extends TWareInfo> extends Com
 }
 
 export class BasketView<C extends ICardBasket<T>,T extends TWareInfo> extends CatalogView<C,TWareInfo&{index:number}> implements IBasketView<C,T> {
-    protected _listContainer: HTMLUListElement;
-    protected _index: number;
-    protected _price: HTMLSpanElement;
-    protected _button: HTMLButtonElement;
-    constructor (protected _currentElement: HTMLElement,protected _event:IEvents, protected _CardConstructor:ICardConstructor<T,C>, protected _cardTemplate:HTMLTemplateElement) {
-        super(_currentElement, _event, _CardConstructor, _cardTemplate);
+    protected _listContainer: HTMLUListElement; //контейнер, где располагаются карточки
+    protected _index: number; //индекс каждой карточки в корзине
+    protected _price: HTMLSpanElement; //полная цена
+    protected _button: HTMLButtonElement; //кнопка покупки
+    constructor ( _currentElement: HTMLElement, _event:IEvents,  _CardConstructor:ICardConstructor<T,C>,  _cardTemplate:HTMLTemplateElement,  _cardModifier:TcardModifier<C>) {
+        super(_currentElement, _event, _CardConstructor, _cardTemplate, _cardModifier);
         this._listContainer=ensureElement<HTMLUListElement>('.basket__list',_currentElement)
         this._price=ensureElement<HTMLUListElement>('.basket__price',_currentElement)
         this._button=ensureElement<HTMLButtonElement>('.basket__button',_currentElement)
         this._index=0;
         this._button.addEventListener('click',this.action.bind(this));
+        this._customButtonSelector='.basket__item-delete';
         this.setEmpty();
     }
-    protected action() {
+
+    protected action() :void { //действие при нажатии на кнопку
         this._event.emit('orderItems');
     }
 
@@ -82,7 +86,7 @@ export class BasketView<C extends ICardBasket<T>,T extends TWareInfo> extends Ca
         this._price.textContent=makePriceText(value);
     }
 
-    protected setEmpty(value=true):void {
+    protected setEmpty(value=true):void { //очистка корзины, фактически просто выключает кнопку
         this.setDisabled(this._button,value);
     }
 }

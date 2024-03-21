@@ -1,19 +1,20 @@
-import { TPaymentType } from "../types/model";
+import { IDialog, IForm } from "../types/form";
+import { TOrderInfo, TPaymentType } from "../types/model";
 import { ensureAllElements, ensureElement } from "../utils/utils";
 import { Component } from "./base/component";
 import { IEvents } from "./base/events";
 
 
-abstract class Form extends Component<object> {
-    protected _error: HTMLSpanElement;
-    protected _submitButton: HTMLButtonElement;
-    protected _inputs: HTMLInputElement[];
-    public name:string;
+abstract class Form extends Component<object> implements IForm {
+    protected _error: HTMLSpanElement; //элемент ошибки
+    protected _submitButton: HTMLButtonElement; //элемент кнопки сабмита
+    protected _inputs: HTMLInputElement[]; //элемент ввода
+    protected _name:string; //имя формы
     constructor(protected _container:HTMLFormElement, protected _event:IEvents) {
         super(_container, _event);
         this._error=ensureElement<HTMLSpanElement>('.form__errors',_container);
         this._inputs=[];
-        this.name=_container.name;
+        this._name=_container.name;
         Array.from(this._container.elements).forEach((element)=>{
             if (element.nodeName === 'INPUT') {
                 this._inputs.push(element as HTMLInputElement);
@@ -37,12 +38,14 @@ abstract class Form extends Component<object> {
         }
     }
 
-    get values() {
-        return {}
+    abstract get values():object //абстрактный метод выводит объект со всеми значениями инпутов и переключателей, реализуется в производных классах
+
+    get name(): string{
+        return this._name;
     }
 
     protected _validateForm(){
-        this._event.emit(`form:validate`,{name:this._container.name,info:this.values});
+        this._event.emit(`form:validate`,{name:this.name,info:this.values});
     }
 
     protected _addEventListeners() {
@@ -64,31 +67,30 @@ abstract class Form extends Component<object> {
 }
 
 export class FormOrder extends Form {
-    protected _paymentType: TPaymentType|undefined;
-    protected _paymentSwitchers: HTMLButtonElement[];
-    protected _addressInput:HTMLInputElement;
+    protected _paymentType: TPaymentType|undefined; //тип опаты
+    protected _paymentSwitchers: HTMLButtonElement[]; //переключатели типа оплаты
+    protected _addressInput:HTMLInputElement; //элемент инпута адреса
     constructor(protected _container:HTMLFormElement,protected _event:IEvents) {
         super(_container,_event);
         this._paymentSwitchers=ensureAllElements<HTMLButtonElement>('.button_alt',_container);
         this._addressInput=this._inputs.find(input=>input.name==='address');
         this._addEventListeners();
         this._listenPaymentSelector();
-
     }
 
-    private _listenPaymentSelector () {
+    private _listenPaymentSelector () { //слушатель клика по опладе для переключения
         this._paymentSwitchers.forEach(button=>{
             button.addEventListener('click',this._changePayment.bind(this));
         })
     }
 
-    private _deselectPayment () {
+    private _deselectPayment () { //выключить все кнопки выбора оплаты
         this._paymentType=undefined;
         this._paymentSwitchers.forEach(button=>{
             this.toggleClass(button,'button_alt-active',false);
         })
     }
-    private _changePayment(event:MouseEvent|undefined) {
+    private _changePayment(event:MouseEvent|undefined):void { //переключить тип оплаты: выключает все кнопки и включает ту, по которой нажали
         let name='';
         if (event) {
             this._deselectPayment ();
@@ -139,7 +141,7 @@ export class FormOrder extends Form {
         super.reset();
     }
 
-    get values() {
+    get values():Partial<TOrderInfo> {
         return {payment:this.payment,address:this.address}
     }
 
@@ -178,12 +180,12 @@ export class FormContacts extends Form {
         super.reset();
     }
 
-        get values() {
+        get values():Partial<TOrderInfo> {
         return {phone:this.phone,email:this.email}
     }
 }
 
-export class Dialog extends Component<object> {
+export class Dialog extends Component<object> implements IDialog {
     protected _response:HTMLParagraphElement;
     protected _title:HTMLHeadElement;
     protected _button:HTMLButtonElement;
@@ -202,9 +204,6 @@ export class Dialog extends Component<object> {
     set error (val:string) {
         this.setText(this._title,'ошибка заказа');
         this.setText(this._response,val);
-    }
-    get currentElement() {
-        return this._container;
     }
 
     protected _onSubmit(evt:SubmitEvent) {
