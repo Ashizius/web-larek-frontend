@@ -32,14 +32,18 @@ export class Api implements IApi {
         .then((data) => Promise.reject(data.error ?? response.statusText));
   }
 
-  get(uri: string):Promise<any> {
+  get(uri: string): Promise<any> {
     return fetch(this.baseUrl + uri, {
       ...this.options,
       method: 'GET',
     }).then(this.handleResponse);
   }
 
-  post(uri: string, data: object, method: ApiPostMethods = 'POST'):Promise<any> {
+  post(
+    uri: string,
+    data: object,
+    method: ApiPostMethods = 'POST'
+  ): Promise<any> {
     return fetch(this.baseUrl + uri, {
       ...this.options,
       method,

@@ -110,8 +110,8 @@ export abstract class Component<T> implements IComponent<T> {
     return this._container;
   }
 
-
-  public addListener(   //добавить слушатель на элемент и записать его в массив
+  public addListener(
+    //добавить слушатель на элемент и записать его в массив
     element: HTMLButtonElement | HTMLInputElement,
     type: string,
     callback: TAction
@@ -124,7 +124,8 @@ export abstract class Component<T> implements IComponent<T> {
     }
   }
 
-  public clearListeners(element?: HTMLButtonElement | HTMLInputElement) { //очистить все слушатели в компоненте
+  public clearListeners(element?: HTMLButtonElement | HTMLInputElement) {
+    //очистить все слушатели в компоненте
     if (!element) {
       this._callbacks.forEach((listeners, element) => {
         listeners.forEach((listener) =>

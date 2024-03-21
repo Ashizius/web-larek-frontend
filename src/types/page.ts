@@ -1,4 +1,4 @@
 export interface IPage {
-    set waresAmount(value:number) 
-    lock(locked:boolean): void;
+  set waresAmount(value: number);
+  lock(locked: boolean): void;
 }
