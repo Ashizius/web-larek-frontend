@@ -8,7 +8,7 @@ import { makePriceText } from './card';
 
 export class CatalogView<C extends ICardBase<T>, T extends TWareInfo>
   extends Component<T>
-  implements ICatalogView<C, T>
+  implements ICatalogView<T>
 {
   protected _cards: C[];
   protected _customButtonSelector: string | undefined;
@@ -36,27 +36,38 @@ export class CatalogView<C extends ICardBase<T>, T extends TWareInfo>
     return newCard;
   }
 
+  private removeExtraCards(
+    wares: T[],
+    placeContainer?: HTMLElement | undefined
+  ): boolean {
+    const container = placeContainer ? placeContainer : this._container;
+    if (this._cards.length > wares.length) {
+      this._cards.splice(wares.length).forEach((card) => card.clearListeners());
+      container.replaceChildren();
+      wares.forEach((ware, index) => {
+        this.updateCard(ware, index).place(container);
+      });
+      return true;
+    }
+    return false;
+  }
+
+  private updateCard(ware: T, index: number): Component<T> {
+    return this._cards[index].render(ware);
+  }
+
   public setList(wares: T[], placeContainer?: HTMLElement | undefined): void {
     //назначить список карточек, если уже есть карточки, то обновить их, удалив лишние
     const container = placeContainer ? placeContainer : this._container;
-    let replace = false;
-    const length: number = this._cards.length;
-    if (length > wares.length) {
-      this._cards.splice(wares.length).forEach((card) => card.clearListeners());
-      container.replaceChildren();
-      replace = true;
+    const replace = this.removeExtraCards(wares, placeContainer);
+    if (!replace) {
+      const length: number = this._cards.length;
+      wares.forEach((ware, index) => {
+        index > length - 1
+          ? this.addCard(ware).place(container)
+          : this.updateCard(ware, index);
+      });
     }
-    wares.forEach((ware, index) => {
-      if (index > length - 1) {
-        this.addCard(ware).place(container);
-      } else {
-        if (replace) {
-          this._cards[index].render(ware).place(container);
-        } else {
-          this._cards[index].render(ware);
-        }
-      }
-    });
   }
 
   public find(id: string): C | undefined {
@@ -66,11 +77,12 @@ export class CatalogView<C extends ICardBase<T>, T extends TWareInfo>
 
 export class BasketView<C extends ICardBasket<T>, T extends TWareInfo>
   extends CatalogView<C, TWareInfo & { index: number }>
-  implements IBasketView<C, T>
+  implements IBasketView<T>
 {
   protected _listContainer: HTMLUListElement; //контейнер, где располагаются карточки
   protected _index: number; //индекс каждой карточки в корзине
-  protected _price: HTMLSpanElement; //полная цена
+  protected _priceElement: HTMLSpanElement; // элемент полной цены
+  protected _price: number; //полная цена
   protected _button: HTMLButtonElement; //кнопка покупки
   constructor(
     _currentElement: HTMLElement,
@@ -90,7 +102,7 @@ export class BasketView<C extends ICardBasket<T>, T extends TWareInfo>
       '.basket__list',
       _currentElement
     );
-    this._price = ensureElement<HTMLUListElement>(
+    this._priceElement = ensureElement<HTMLUListElement>(
       '.basket__price',
       _currentElement
     );
@@ -101,7 +113,7 @@ export class BasketView<C extends ICardBasket<T>, T extends TWareInfo>
     this._index = 0;
     this._button.addEventListener('click', this.action.bind(this));
     this._customButtonSelector = '.basket__item-delete';
-    this.setEmpty();
+    this.setEmpty(true);
   }
 
   protected action(): void {
@@ -119,14 +131,19 @@ export class BasketView<C extends ICardBasket<T>, T extends TWareInfo>
       cartWares,
       listContainer ? listContainer : this._listContainer
     );
-    this.setEmpty(this._index === 0);
+    this.setEmpty();
   }
   set fullprice(value: number) {
-    this._price.textContent = makePriceText(value);
+    this._price = value;
+    this._priceElement.textContent = makePriceText(value);
+    this.setEmpty();
   }
 
-  protected setEmpty(value = true): void {
+  protected setEmpty(value?: boolean): void {
     //очистка корзины, фактически просто выключает кнопку
-    this.setDisabled(this._button, value);
+    this.setDisabled(
+      this._button,
+      value ? value : this._index === 0 || this._price === 0
+    );
   }
 }

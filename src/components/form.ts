@@ -18,9 +18,9 @@ abstract class Form extends Component<object> implements IForm {
     this._inputs = [];
     this._name = _container.name;
     Array.from(this._container.elements).forEach((element) => {
-      if (element.nodeName === 'INPUT') {
+      if (element instanceof HTMLInputElement) {
         this._inputs.push(element as HTMLInputElement);
-      } else if (element.nodeName === 'BUTTON') {
+      } else if (element instanceof HTMLButtonElement) {
         if ((element as HTMLButtonElement).type === 'submit') {
           this._submitButton = element as HTMLButtonElement;
         }

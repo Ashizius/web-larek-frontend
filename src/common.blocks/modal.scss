@@ -1,5 +1,5 @@
-@use "variables" as *;
-@use "mixins";
+@use 'variables' as *;
+@use 'mixins';
 
 .modal {
   @include mixins.sublayer;
@@ -58,7 +58,7 @@
   }
 
   &__message {
-    white-space:nowrap;
+    white-space: nowrap;
     max-width: 60%;
     text-overflow: ellipsis;
     overflow: hidden;

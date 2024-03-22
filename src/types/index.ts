@@ -6,7 +6,6 @@ export type TAction = (event: MouseEvent) => void;
 export type TOrderResult = {
   id: string;
   total: number;
-  error: string;
 };
 
 export type TError = {
@@ -16,5 +15,5 @@ export type TError = {
 export interface ILarekApi extends IApi {
   getWare(id: string): Promise<TWareInfo>; //получить данные о товаре с сервера
   getWaresList(): Promise<TWareInfo[]>; //получить список товаров с сервера
-  postOrder(orderData: TOrderInfo): Promise<Partial<TOrderResult> | void>; //отправить заказ на сервер
+  postOrder(orderData: TOrderInfo): Promise<TOrderResult>; //отправить заказ на сервер
 }

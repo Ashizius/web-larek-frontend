@@ -1,8 +1,7 @@
 import { IEvents } from '../components/base/events';
+import { TWareCategory } from '../utils/constants';
 
 export type TPrice = number | null;
-
-export type TWareCategory = string;
 
 export type TWareInfo = {
   id: string;

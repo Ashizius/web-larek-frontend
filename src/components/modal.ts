@@ -19,6 +19,7 @@ export class ModalWindow implements IModalWindow {
       '.modal__close',
       _currentElement
     );
+    this.closeEvent = this.closeEvent.bind(this);
   }
 
   protected closeEvent(evt: KeyboardEvent) {
@@ -33,19 +34,16 @@ export class ModalWindow implements IModalWindow {
   }
 
   open() {
-    this._currentElement.addEventListener('click', this.closeEvent.bind(this));
-    document.addEventListener('keydown', this.closeEvent.bind(this));
+    this._currentElement.addEventListener('click', this.closeEvent);
+    document.addEventListener('keydown', this.closeEvent);
     this._currentElement.classList.add('modal_active');
     this._event.emit('modal:open');
     return this;
   }
 
   close() {
-    this._currentElement.removeEventListener(
-      'click',
-      this.closeEvent.bind(this)
-    );
-    document.removeEventListener('keypressed', this.closeEvent.bind(this));
+    this._currentElement.removeEventListener('click', this.closeEvent);
+    document.removeEventListener('keydown', this.closeEvent);
     this._currentElement.classList.remove('modal_active');
     this._event.emit('modal:close');
     return this;

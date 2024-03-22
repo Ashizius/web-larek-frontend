@@ -16,7 +16,7 @@ import { TOrderResult } from './types';
 const api = new LarekApi(CDN_URL, API_URL);
 const eventEmitter = new EventEmitter();
 
-const cart = new Cart(eventEmitter);
+const cart = new Cart();
 const catalog = new Catalog(Ware, eventEmitter);
 const order = new Order();
 
@@ -180,8 +180,8 @@ eventEmitter.on('form:advance', () => {
       });
       api
         .postOrder(order.info)
-        .then((data: Partial<TOrderResult>) => {
-          dialogSuccess.total = (data as TOrderResult).total;
+        .then((data: TOrderResult) => {
+          dialogSuccess.total = data.total;
           cart.clear();
           eventEmitter.emit('cart:changeItem');
         })

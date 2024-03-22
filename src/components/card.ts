@@ -1,6 +1,7 @@
 import { TAction } from '../types';
 import { ICardBase, ICardBasket, ICardCatalog } from '../types/card';
-import { TPrice, TWareCategory, TWareInfo } from '../types/model';
+import { TPrice, TWareInfo } from '../types/model';
+import { TWareCategory, constantCategory } from '../utils/constants';
 import { ensureElement } from '../utils/utils';
 import { Component } from './base/component';
 import { IEvents } from './base/events';
@@ -15,6 +16,7 @@ export abstract class CardBase<T extends TWareInfo>
 {
   protected _titleElement: HTMLHeadElement;
   protected _priceElement: HTMLSpanElement;
+  protected _price: TPrice;
   protected _buttonElement: HTMLButtonElement | undefined;
   protected _action: TAction;
   constructor(
@@ -36,7 +38,7 @@ export abstract class CardBase<T extends TWareInfo>
     } else {
       this._buttonElement = this._container as HTMLButtonElement;
     }
-    this.addListener(this._buttonElement, 'click', this.action.bind(this));
+    this._buttonElement.addEventListener('click', this.action.bind(this));
   }
 
   protected action(event: MouseEvent) {
@@ -63,8 +65,17 @@ export abstract class CardBase<T extends TWareInfo>
     return this._titleElement.textContent as string;
   }
 
-  set price(value: TPrice) {
-    this.setText(this._priceElement, makePriceText(value));
+  set price(price: TPrice) {
+    this.setText(this._priceElement, makePriceText(price));
+    this._price = price;
+    if (this._price === null && this._buttonElement !== this._container) {
+      this.setDisabled(this._buttonElement, true);
+      this.setText(this._buttonElement, 'недоступен');
+    }
+  }
+
+  public clearListeners() {
+    this._buttonElement.removeEventListener('click', this.action.bind(this));
   }
 }
 
@@ -97,7 +108,21 @@ export class CardCatalog<T extends TWareInfo>
   }
 
   set category(value: TWareCategory) {
-    this.toggleClass(this._categodyElement, `.card__category_${value}`);
+    this._categodyElement.classList.forEach((value) => {
+      if (value !== 'card__category') {
+        this._categodyElement.classList.remove(value);
+      }
+    });
+    this._categodyElement.classList.add(
+      `card__category_${
+        constantCategory
+          ? value in constantCategory
+            ? constantCategory[value]
+            : 'other'
+          : 'other'
+      }`
+    );
+    this.setText(this._categodyElement, `${value}`);
   }
 
   set title(value: string) {
@@ -114,14 +139,11 @@ export class CardCatalog<T extends TWareInfo>
   }
 
   set isInCart(value: boolean) {
-    if (this._buttonElement) {
-      if (value) {
-        this.setText(this._buttonElement, 'Убрать');
-      } else {
-        this.setText(this._buttonElement, 'Купить');
-      }
-      this._isInCart = value;
+    if (this._buttonElement && this._price !== null) {
+      this.setDisabled(this._buttonElement, false);
+      this.setText(this._buttonElement, value ? 'Убрать' : 'Купить');
     }
+    this._isInCart = value;
   }
 
   get isInCart(): boolean {

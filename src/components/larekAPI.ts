@@ -27,18 +27,7 @@ export class LarekApi extends Api implements ILarekApi {
     );
   }
 
-  public postOrder(
-    orderData: TOrderInfo
-  ): Promise<Partial<TOrderResult> | void> {
-    return this.post('/order', orderData).then((data) => {
-      if (data) {
-        if ('error' in data) {
-          return Promise.reject(data.error);
-        }
-        return data;
-      } else {
-        return Promise.reject('empty element');
-      }
-    });
+  public postOrder(orderData: TOrderInfo): Promise<TOrderResult> {
+    return this.post('/order', orderData).then((data: TOrderResult) => data);
   }
 }

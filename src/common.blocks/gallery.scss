@@ -1,5 +1,5 @@
-@use "variables" as *;
-@use "mixins";
+@use 'variables' as *;
+@use 'mixins';
 
 .gallery {
   @include mixins.container;

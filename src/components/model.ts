@@ -68,7 +68,7 @@ export class Cart implements ICart {
   protected _idList: string[] | undefined;
   protected _amount: number | undefined;
   protected _positions: TWareInfo[] | undefined;
-  constructor(_event: IEvents) {
+  constructor() {
     this.waresList = new Map<IWare, number>();
   }
 
@@ -133,21 +133,23 @@ export class Cart implements ICart {
   }
 
   public addItem(ware: IWare): void {
-    if (this.waresList.has(ware)) {
-      this.waresList.set(ware, this.waresList.get(ware) + 1);
-    } else {
-      this.waresList.set(ware, 1);
+    const quantity = this.waresList.get(ware) || 0;
+    if (quantity === 0) {
       ware.isInCart = true;
     }
+    this.waresList.set(ware, quantity + 1);
     this._resetCache();
   }
 
   public removeItem(ware: IWare): void {
+    const quantity = this.waresList.get(ware) || 0;
     if (this.waresList.has(ware)) {
-      this.waresList.set(ware, this.waresList.get(ware) - 1);
-      if (this.waresList.get(ware) === 0) {
+      //можно заменить просто проверкой на количество, но оставил на случай отсутствия в массиве, потому что, всё же, 0 и отсутствие -- разные вещи
+      if (quantity <= 1) {
         this.waresList.delete(ware);
         ware.isInCart = false;
+      } else {
+        this.waresList.set(ware, quantity - 1);
       }
       this._resetCache();
     }

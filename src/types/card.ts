@@ -1,7 +1,8 @@
 import { TAction } from '.';
 import { Component } from '../components/base/component';
 import { IEvents } from '../components/base/events';
-import { TPrice, TWareCategory } from './model';
+import { TWareCategory } from '../utils/constants';
+import { TPrice } from './model';
 
 export interface ICardBase<T> extends Component<T> {
   id: string; //id карточки
